@@ -9,13 +9,15 @@ import {
   Select,
   Input,
   Button,
-  FormErrorMessage,
+  Text,
+  Center,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import addSurvey from "../utils/AddSurvey";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/Firebase";
+import { async } from "@firebase/util";
 
 export default function SurveysForm() {
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ export default function SurveysForm() {
     country_of_origin: "",
     terms_and_conditions: false,
   });
+  console.log("INPUT STATE", input);
   const [errors, setErrors] = useState({
     full_name: "",
     email: "",
@@ -45,74 +48,123 @@ export default function SurveysForm() {
     country_of_origin: "",
     terms_and_conditions: "",
   });
+  console.log("ERROR STATE", errors);
+  const [loading, setLoading] = useState(false);
+  const [flag, setFlag] = useState(false);
 
-  // console.log("INPUT", input);
 
-  async function validate() {
-    let emailExist = false;
-    let usersFirebase = await getDocs(collection(db, "surveys"));
+  let emailExist = false;
 
-    usersFirebase.forEach((d) =>
-      d.data().email === input.email ? (emailExist = true) : null
-    );
-    console.log("FIND EMAIL", emailExist);
+  async function validateSubmit() {
+    // console.log("ENTRE");
+    const querySurveys = await getDocs(collection(db, "surveys"));
 
+    querySurveys.forEach((d) => {
+      if (d.data().email === input.email) {
+        emailExist = true;
+      }
+    });
+
+    // console.log("EXISTE?", emailExist);
+    if (input.full_name === "") {
+      errors.full_name = "Campo requerido";
+    }
+    if (input.email === "") {
+      errors.email = "Email vacio";
+      console.log("EMAIL vacio", errors);
+    } else if (emailExist) {
+      errors.email = "Este email ya está en uso";
+    } else if (
+      !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(input.email)
+    ) {
+      errors.email = "email invalido";
+    } else {
+      errors.email = "";
+    }
+    if (input.country_of_origin === "") {
+      errors.country_of_origin = "Selecciona tu pais de origen";
+    } else {
+      errors.country_of_origin = "";
+    }
+    if (input.terms_and_conditions === false) {
+      errors.terms_and_conditions =
+        "Se debe aceptar los términos y condiciones";
+    } else {
+      errors.terms_and_conditions = "";
+    }
+    return errors;
+  }
+
+  function validate() {
+    if (input.full_name === "") {
+      errors.full_name = "Campo requerido";
+    } else if (input.full_name.length > 25) {
+      errors.full_name = "Máximo de carácteres permitido";
+    } else {
+      errors.full_name = "";
+    }
     if (input.email === "") {
       errors.email = "Debes ingresar tu correo electrónico";
     } else if (
       !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(input.email)
     ) {
       errors.email = "El formato de email es inválido";
-    } else if (emailExist) {
-      errors.email = `El correo '${input.email}' ya está en uso`;
     } else {
       errors.email = "";
     }
-    // if (input.name === "") {
-    //   errors.name = "Por favor ingresa tu nombre";
-    // } else if (input.name.length > 18) {
-    //   errors.name = "El nombre puede contener hasta 18 caracteres";
-    // } else {
-    //   errors.name = "";
-    // }
-    // if (input.surname === "") {
-    //   errors.surname = "Por favor ingresa tu apellido";
-    // } else if (input.surname.length > 22) {
-    //   errors.surname = "El apellido puede contener hasta 22 caracteres";
-    // } else {
-    //   errors.surname = "";
-    // }
-    // if (input.phone === "") {
-    //   errors.phone = "Por favor ingresa tu número de telefono";
-    // } else if (!(input.phone.length >= 8 && input.phone.length <= 10)) {
-    //   errors.phone = "El número debe tener entre 8 y 10 digitos";
-    // } else {
-    //   errors.phone = "";
-    // }
-    // if (input.password === "") {
-    //   errors.password = "Debes ingresar tu contraseña";
-    // } else if (
-    //   !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(input.password) ||
-    //   input.password.length < 8 ||
-    //   input.password.length > 16
-    // ) {
-    //   errors.password =
-    //     "La contraseña debe tener entre 8 y 16 caracteres, una mayúscula, una minúscula y un número.";
-    // } else {
-    //   errors.password = "";
-    // }
+    if (input.birth_date === "") {
+      errors.birth_date = "Falta elegir tu fecha de nacimiento";
+    } else {
+      errors.birth_date = "";
+    }
+    if (input.country_of_origin === "") {
+      errors.country_of_origin = "Selecciona tu pais de origen";
+    } else {
+      errors.country_of_origin = "";
+    }
+    if (input.terms_and_conditions === false) {
+      errors.terms_and_conditions = "";
+    } else {
+      errors.terms_and_conditions = "Debes aceptar";
+    }
+    // console.log("FIN VALIDATE");
+    return errors;
   }
-  validate();
+
+  function handlerFlag() {
+    // console.log("ENTRE AL FLAG")
+    if (flag === false) {
+      setFlag(true);
+      console.log("FLAG TRUE", flag)
+    } else {
+      setFlag(false);
+      console.log("FLAG FALSE", flag)
+    }
+  }
 
   function handlerChange(e) {
     e.preventDefault();
+    
+    setErrors(validate());
     setInput({
       ...input,
       [e.target.name]: e.target.value,
     });
+    setTimeout(()=>{
+      handlerFlag();
+    }, 200)
+    
   }
-
-  function handlerCheckbox() {
+  
+  function handlerCheckbox(e) {
+    e.preventDefault()
+    
+    setErrors(validate());
+    setInput({
+      ...input,
+      [e.target.name]: e.target.value,
+    });
+    
     if (input.terms_and_conditions === false) {
       setInput({
         ...input,
@@ -124,20 +176,47 @@ export default function SurveysForm() {
         terms_and_conditions: false,
       });
     }
+    setTimeout(()=>{
+      handlerFlag();
+    }, 200)
   }
 
   function handlerSubmit(e) {
     e.preventDefault();
 
-    addSurvey(input);
+    setLoading(true);
     alert("¡Muchas gracias por completar la encuesta!");
-    setInput({
-      full_name: "",
-      email: "",
-      birth_date: "",
-      country_of_origin: "",
-      terms_and_conditions: false,
-    });
+
+    console.log("ENTRE HANDLER SUBMIT");
+    validateSubmit();
+
+    setTimeout(() => {
+      console.log("ENTRE AL TIMERMAN");
+      if (
+        errors.email === "" &&
+        errors.full_name === "" &&
+        errors.birth_date === "" &&
+        errors.terms_and_conditions === "" &&
+        errors.country_of_origin === ""
+      ) {
+        setLoading(false);
+        console.log("NO HAY ERRORS", errors);
+        console.log("loading false", loading);
+        addSurvey(input);
+        setInput({
+          full_name: "",
+          email: "",
+          birth_date: "",
+          country_of_origin: "",
+          terms_and_conditions: false,
+        });
+      } else {
+        setLoading(false);
+        console.log("SI HAY ERRORS", errors);
+        console.log("loading also false", loading);
+        alert("Uno o varios campos contienen un error");
+      }
+    }, 1500);
   }
 
   function isCompleteForm() {
@@ -153,117 +232,166 @@ export default function SurveysForm() {
     }
   }
 
+  // useEffect(() => {
+  //   setInput({
+  //     ...input,
+  //   });
+  //   console.log("render INPUTS")
+  // }, [input]);
+
   useEffect(() => {
-    setInput({
-      ...input,
-    });
-  }, []);
+    // console.log("render SURVEYS")
+  }, [flag]);
+
+  useEffect(()=>{
+    // console.log("render ERROR")
+  },[errors])
 
   return (
     <form>
-      <Flex
-        minH={"100vh"}
-        align={"center"}
-        justify={"center"}
-        bg="brand.green.200"
-      >
-        <Stack spacing={8} mx={"auto"} maxW={"lg"} py={12} px={6}>
-          <Box>
-            <FormControl id="full_name" isRequired>
-              <FormLabel>Nombre completo</FormLabel>
-              <Input
-                name="full_name"
-                value={input.full_name}
-                onChange={(e) => handlerChange(e)}
-              />
-            </FormControl>
-          </Box>
-          <Box>
-            <FormControl id="email" isRequired>
-              <FormLabel>Email</FormLabel>
-              <Input
-                name="email"
-                value={input.email}
-                onChange={(e) => handlerChange(e)}
-              />
-              <FormHelperText>ejemplo99@gmail.com</FormHelperText>
-            </FormControl>
-          </Box>
-          <Box>
-            <FormControl id="birth_date" isRequired>
-              <FormLabel>Fecha de nacimiento</FormLabel>
-              <Input
-                name="birth_date"
-                type="date"
-                value={input.birth_date}
-                onChange={(e) => handlerChange(e)}
-              />
-            </FormControl>
-          </Box>
-
-          <Box>
-            <FormControl id="country_of_origin" isRequired>
-              <FormLabel>País de origen</FormLabel>
-              <Select
-                placeholder="Elige un país"
-                focusBorderColor={"brand.green.300"}
-                fontFamily={"body"}
-                name="country_of_origin"
-                value={input.country_of_origin}
-                onChange={(e) => handlerChange(e)}
-              >
-                {countries.map((country, idx) => (
-                  <option key={idx} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Box>
-            <FormControl id="terms_and_conditions" isRequired>
-              <FormLabel>Aceptar Términos y Condiciones</FormLabel>
-              <input
-                type="checkbox"
-                name="terms_and_conditions"
-                value={input.terms_and_conditions}
-                onChange={(e) => handlerCheckbox(e)}
-                checked={input.terms_and_conditions}
-              />
-            </FormControl>
-          </Box>
-          <Button
-            onClick={(e) => [handlerSubmit(e), window.scrollTo(0, 0)]}
-            loadingText="post survey"
-            fontFamily={"body"}
-            size="lg"
-            bg={"orange.300"}
-            color={"black"}
-            _hover={{
-              bg: "orange.400",
-            }}
-            isDisabled={!isCompleteForm()}
+      {loading ? (
+        <Center>
+          <Text
+            color={"blackAlpha.600"}
+            marginTop={400}
+            fontWeight={700}
+            lineHeight={1.2}
+            fontSize={50}
+            textAlign={"center"}
+            justifyContent={"center"}
           >
-            Enviar encuesta
-          </Button>
+            Verificando encuesta. Espere un momento...
+          </Text>
+        </Center>
+      ) : (
+        <Flex
+          minH={"100vh"}
+          align={"center"}
+          justify={"center"}
+          bg="brand.green.200"
+        >
+          <Stack spacing={8} mx={"auto"} maxW={"lg"} py={12} px={6}>
+            <Box>
+              <FormControl id="full_name" isRequired>
+                <FormLabel>Nombre completo</FormLabel>
+                <Input
+                  name="full_name"
+                  value={input.full_name}
+                  onChange={(e) => handlerChange(e)}
+                />
+              </FormControl>
+              {errors.full_name ? (
+                <Text color={"red"}>{errors.full_name}</Text>
+              ) : null}
+            </Box>
 
-          <Button
-            fontFamily={"body"}
-            bg="base.green.100"
-            fontSize={"1.4rem"}
-            color={"grey"}
-            _hover={{
-              color: "orange.400",
-            }}
-            p="0"
-            mr="1rem"
-            onClick={() => navigate("/")}
-          >
-            Ver respuestas
-          </Button>
-        </Stack>
-      </Flex>
+            <Box>
+              <FormControl id="email" isRequired>
+                <FormLabel>Email</FormLabel>
+                <Input
+                  name="email"
+                  value={input.email}
+                  onChange={(e) => handlerChange(e)}
+                />
+                <FormHelperText
+                  backgroundColor={"blackAlpha.100"}
+                  width={"fit-content"}
+                  padding={1}
+                  borderRadius={5}
+                >
+                  ejemplo99@gmail.com
+                </FormHelperText>
+                {errors.email ? (
+                  <Text color={"red"}>{errors.email}</Text>
+                ) : null}
+              </FormControl>
+            </Box>
+
+            <Box>
+              <FormControl id="birth_date" isRequired>
+                <FormLabel>Fecha de nacimiento</FormLabel>
+                <Input
+                  name="birth_date"
+                  type="date"
+                  value={input.birth_date}
+                  onChange={(e) => handlerChange(e)}
+                />
+              </FormControl>
+              {errors.birth_date ? (
+                <Text color={"red"}>{errors.birth_date}</Text>
+              ) : null}
+            </Box>
+
+            <Box>
+              <FormControl id="country_of_origin" isRequired>
+                <FormLabel>País de origen</FormLabel>
+                <Select
+                  placeholder="Elige un país"
+                  focusBorderColor={"brand.green.300"}
+                  fontFamily={"body"}
+                  name="country_of_origin"
+                  value={input.country_of_origin}
+                  onChange={(e) => handlerChange(e)}
+                >
+                  {countries.map((country, idx) => (
+                    <option key={idx} value={country}>
+                      {country}
+                    </option>
+                  ))}
+                </Select>
+                {errors.country_of_origin ? (
+                  <Text color={"red"}>{errors.country_of_origin}</Text>
+                ) : null}
+              </FormControl>
+            </Box>
+
+            <Box>
+              <FormControl id="terms_and_conditions" isRequired>
+                <FormLabel>Aceptar Términos y Condiciones</FormLabel>
+                <input
+                  type="checkbox"
+                  name="terms_and_conditions"
+                  value={input.terms_and_conditions}
+                  onChange={(e) => handlerCheckbox(e)}
+                  checked={input.terms_and_conditions}
+                />
+              {errors.terms_and_conditions !== "" ? (
+                <Text color={"red"}>{errors.terms_and_conditions}</Text>
+              ) : null}
+              </FormControl>
+            </Box>
+
+            <Button
+              onClick={(e) => [handlerSubmit(e), window.scrollTo(0, 0)]}
+              loadingText="post survey"
+              fontFamily={"body"}
+              size="lg"
+              bg={"orange.300"}
+              color={"black"}
+              _hover={{
+                bg: "orange.400",
+              }}
+              // isDisabled={!isCompleteForm()}
+            >
+              Enviar encuesta
+            </Button>
+            <Button
+              fontFamily={"body"}
+              bg="base.green.100"
+              fontSize={"1.4rem"}
+              color={"grey"}
+              _hover={{
+                color: "orange.400",
+              }}
+              Text="0"
+              mr="1rem"
+              onClick={() => navigate("/")}
+            >
+              Ver respuestas
+            </Button>
+          </Stack>
+        </Flex>
+      )}
     </form>
   );
 }
