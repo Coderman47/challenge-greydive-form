@@ -15,7 +15,7 @@ export default function SurveyCard({
 }) {
   // console.log("SURVEY CARD", full_name);
   return (
-    <Card background={"blue.100"} align="center">
+    <Card background={"yellow.100"} align="center">
       <CardHeader>
         <Text>Nombre y apellido: {full_name}</Text>
       </CardHeader>

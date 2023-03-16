@@ -9,6 +9,7 @@ import {
   Text,
   useBreakpointValue,
   Button,
+  Flex,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
@@ -54,39 +55,51 @@ export default function Home() {
   useEffect(() => {}, [flag]);
 
   return (
-    <Center display={"flex"} flexDirection={"column"}>
-      <Box
-        background={"orange.100"}
-        borderRadius={10}
-        padding={3}
-        marginTop={3}
-      >
-        <Text
-          color={"blackAlpha.600"}
-          fontWeight={700}
-          lineHeight={1.2}
-          fontSize={useBreakpointValue({ base: "3xl", md: "4xl" })}
-          textAlign={"center"}
-          justifyContent={"center"}
-        >
-          Puedes completar encuestas y ver los resultados
-        </Text>
-      </Box>
+    <Flex
+      minH={"100vh"}
+      align={"center"}
+      justify={"center"}
+      bg="brand.green.200"
+      background={"yellow.400"}
 
-      <Link to="/createSurveys">
-        <Button margin={5}>Hacer una encuesta</Button>
-      </Link>
-      <SimpleGrid columns={[1, 1, 2, 3]} spacing={12} marginTop={5}>
-        {surveys?.map((sur, idx) => (
-          <SurveyCard
-            key={idx}
-            full_name={sur.full_name}
-            email={sur.email}
-            birth_date={sur.birth_date}
-            country_of_origin={sur.country_of_origin}
-          ></SurveyCard>
-        ))}
-      </SimpleGrid>
-    </Center>
+    >
+      <Center display={"flex"} flexDirection={"column"}>
+        <Box
+          background={"purple.300"}
+          borderRadius={10}
+          padding={3}
+          marginTop={3}
+        >
+          <Text
+            color={"gray.600"}
+            fontWeight={700}
+            lineHeight={1.2}
+            fontSize={useBreakpointValue({ base: "3xl", md: "4xl" })}
+            textAlign={"center"}
+            justifyContent={"center"}
+          >
+            Puedes completar encuestas y ver los resultados
+          </Text>
+        </Box>
+
+        <Link to="/createSurveys">
+          <Button margin={10} bg={"gray.200"} _hover={{
+            bg:"gray.700",
+            color:"gray.200"
+          }}>Hacer una encuesta</Button>
+        </Link>
+        <SimpleGrid columns={[1, 1, 2, 3]} spacing={10} marginTop={2} marginBottom={5}>
+          {surveys?.map((sur, idx) => (
+            <SurveyCard
+              key={idx}
+              full_name={sur.full_name}
+              email={sur.email}
+              birth_date={sur.birth_date}
+              country_of_origin={sur.country_of_origin}
+            ></SurveyCard>
+          ))}
+        </SimpleGrid>
+      </Center>
+    </Flex>
   );
 }
